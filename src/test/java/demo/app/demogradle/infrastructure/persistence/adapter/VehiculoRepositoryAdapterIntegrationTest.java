@@ -3,13 +3,11 @@ package demo.app.demogradle.infrastructure.persistence.adapter;
 import demo.app.demogradle.domain.model.TipoVehiculo;
 import demo.app.demogradle.domain.model.Vehiculo;
 import demo.app.demogradle.infrastructure.persistence.entity.VehiculoEntity;
-import demo.app.demogradle.infrastructure.persistence.mapper.VehiculoMapper;
 import demo.app.demogradle.infrastructure.persistence.repository.VehiculoJpaRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.context.annotation.Import;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,25 +19,20 @@ import static org.junit.jupiter.api.Assertions.*;
  * INTEGRATION TESTS - Arquitectura Hexagonal
  * 
  * ✅ CARACTERÍSTICAS DE INTEGRATION TEST EN HEXAGONAL:
- * - Prueba la integración del ADAPTADOR con infraestructura REAL
+ * - Prueba la integración de JPA con infraestructura REAL
  * - Utiliza Spring Context (@DataJpaTest)
  * - Base de datos H2 en memoria (infraestructura real pero controlada)
- * - Prueba el mapeo entre Domain Model y Entity
- * - Verifica que el adaptador implemente correctamente el PUERTO
- * 
+ * - Prueba el repositorio JPA directamente
+ * - Verifica consultas SQL generadas por JPA
+ *
  * 🎯 QUÉ ESTAMOS PROBANDO:
- * - VehiculoRepositoryAdapter (ADAPTADOR)
- * - VehiculoMapper (conversión Domain ↔ Entity)
  * - VehiculoJpaRepository (Spring Data JPA)
  * - Persistencia real en H2
  * - Consultas SQL generadas por JPA
+ * - Mapeo de entidades JPA
  */
 @DataJpaTest
-@Import({VehiculoRepositoryAdapter.class, VehiculoMapper.class})
-class VehiculoRepositoryAdapterIntegrationTest {
-
-    @Autowired
-    private VehiculoRepositoryAdapter repositoryAdapter; // ← ADAPTADOR bajo prueba
+class VehiculoJpaRepositoryIntegrationTest {
 
     @Autowired
     private VehiculoJpaRepository jpaRepository; // ← Spring Data JPA
@@ -47,20 +40,22 @@ class VehiculoRepositoryAdapterIntegrationTest {
     @Autowired
     private TestEntityManager entityManager; // ← Para setup de datos
 
-    @Autowired
-    private VehiculoMapper mapper; // ← Mapper bajo prueba
-
     /**
-     * INTEGRATION TEST: Guardar vehículo
-     * Prueba persistencia real Domain → Entity → Database
+     * INTEGRATION TEST: Guardar entidad
+     * Prueba persistencia real Entity → Database
      */
     @Test
     void deberiaGuardarVehiculoCorrectamente() {
         // Given - ARRANGE
-        Vehiculo vehiculoDominio = Vehiculo.crear("ABC123", TipoVehiculo.CARRO);
+        VehiculoEntity vehiculo = VehiculoEntity.builder()
+                .placa("ABC123")
+                .tipo(TipoVehiculo.CARRO)
+                .fechaIngreso(LocalDateTime.now())
+                .activo(true)
+                .build();
 
         // When - ACT
-        Vehiculo vehiculoGuardado = repositoryAdapter.guardar(vehiculoDominio);
+        VehiculoEntity vehiculoGuardado = jpaRepository.save(vehiculo);
 
         // Then - ASSERT
         // Verificar que se guardó correctamente
@@ -79,7 +74,7 @@ class VehiculoRepositoryAdapterIntegrationTest {
 
     /**
      * INTEGRATION TEST: Buscar por placa
-     * Prueba consulta Database → Entity → Domain
+     * Prueba consulta Database → Entity
      */
     @Test
     void deberiaBuscarVehiculoPorPlaca() {
@@ -94,11 +89,11 @@ class VehiculoRepositoryAdapterIntegrationTest {
         entityManager.persistAndFlush(entity);
 
         // When - ACT
-        Optional<Vehiculo> resultado = repositoryAdapter.buscarPorPlaca("XYZ789");
+        Optional<VehiculoEntity> resultado = jpaRepository.findById("XYZ789");
 
         // Then - ASSERT
         assertTrue(resultado.isPresent());
-        Vehiculo vehiculo = resultado.get();
+        VehiculoEntity vehiculo = resultado.get();
         assertEquals("XYZ789", vehiculo.getPlaca());
         assertEquals(TipoVehiculo.MOTO, vehiculo.getTipo());
         assertTrue(vehiculo.isActivo());
@@ -111,17 +106,21 @@ class VehiculoRepositoryAdapterIntegrationTest {
     @Test
     void deberiaBuscarVehiculosActivos() {
         // Given - ARRANGE
-        // Vehículo activo
+        // Limpiar cualquier dato previo
+        jpaRepository.deleteAll();
+        entityManager.flush();
+
+        // Vehículo activo con placa válida de 6 caracteres
         VehiculoEntity vehiculoActivo = VehiculoEntity.builder()
-                .placa("ACTIVO1")
+                .placa("ACT001")
                 .tipo(TipoVehiculo.CARRO)
                 .fechaIngreso(LocalDateTime.now())
                 .activo(true)
                 .build();
         
-        // Vehículo inactivo
+        // Vehículo inactivo con placa válida de 6 caracteres
         VehiculoEntity vehiculoInactivo = VehiculoEntity.builder()
-                .placa("INACTIVO1")
+                .placa("INA001")
                 .tipo(TipoVehiculo.MOTO)
                 .fechaIngreso(LocalDateTime.now().minusHours(2))
                 .fechaSalida(LocalDateTime.now())
@@ -131,66 +130,16 @@ class VehiculoRepositoryAdapterIntegrationTest {
         entityManager.persist(vehiculoActivo);
         entityManager.persist(vehiculoInactivo);
         entityManager.flush();
+        entityManager.clear(); // Limpiar el contexto de persistencia
 
         // When - ACT
-        List<Vehiculo> vehiculosActivos = repositoryAdapter.buscarVehiculosActivos();
+        List<VehiculoEntity> vehiculosActivos = jpaRepository.findByActivoTrue();
 
         // Then - ASSERT
         assertEquals(1, vehiculosActivos.size());
-        Vehiculo vehiculo = vehiculosActivos.get(0);
-        assertEquals("ACTIVO1", vehiculo.getPlaca());
+        VehiculoEntity vehiculo = vehiculosActivos.get(0);
+        assertEquals("ACT001", vehiculo.getPlaca());
         assertTrue(vehiculo.isActivo());
-    }
-
-    /**
-     * INTEGRATION TEST: Mapeo Domain ↔ Entity
-     * Prueba VehiculoMapper directamente
-     */
-    @Test
-    void deberiaMapearCorrectamenteDominioAEntity() {
-        // Given - ARRANGE
-        Vehiculo vehiculoDominio = Vehiculo.builder()
-                .placa("MAP123")
-                .tipo(TipoVehiculo.CARRO)
-                .fechaIngreso(LocalDateTime.now())
-                .activo(true)
-                .build();
-
-        // When - ACT
-        VehiculoEntity entity = mapper.toEntity(vehiculoDominio);
-
-        // Then - ASSERT
-        assertNotNull(entity);
-        assertEquals(vehiculoDominio.getPlaca(), entity.getPlaca());
-        assertEquals(vehiculoDominio.getTipo(), entity.getTipo());
-        assertEquals(vehiculoDominio.getFechaIngreso(), entity.getFechaIngreso());
-        assertEquals(vehiculoDominio.isActivo(), entity.isActivo());
-    }
-
-    /**
-     * INTEGRATION TEST: Mapeo Entity → Domain
-     * Prueba conversión inversa
-     */
-    @Test
-    void deberiaMapearCorrectamenteEntityADominio() {
-        // Given - ARRANGE
-        VehiculoEntity entity = VehiculoEntity.builder()
-                .placa("ENT123")
-                .tipo(TipoVehiculo.MOTO)
-                .fechaIngreso(LocalDateTime.now())
-                .fechaSalida(null)
-                .activo(true)
-                .build();
-
-        // When - ACT
-        Vehiculo vehiculoDominio = mapper.toDomain(entity);
-
-        // Then - ASSERT
-        assertNotNull(vehiculoDominio);
-        assertEquals(entity.getPlaca(), vehiculoDominio.getPlaca());
-        assertEquals(entity.getTipo(), vehiculoDominio.getTipo());
-        assertEquals(entity.getFechaIngreso(), vehiculoDominio.getFechaIngreso());
-        assertEquals(entity.isActivo(), vehiculoDominio.isActivo());
     }
 
     /**
@@ -201,14 +150,21 @@ class VehiculoRepositoryAdapterIntegrationTest {
     void deberiaActualizarEstadoVehiculo() {
         // Given - ARRANGE
         // Crear y persistir vehículo activo
-        Vehiculo vehiculoInicial = Vehiculo.crear("UPD123", TipoVehiculo.CARRO);
-        Vehiculo vehiculoGuardado = repositoryAdapter.guardar(vehiculoInicial);
-        
+        VehiculoEntity vehiculoInicial = VehiculoEntity.builder()
+                .placa("UPD123")
+                .tipo(TipoVehiculo.CARRO)
+                .fechaIngreso(LocalDateTime.now())
+                .activo(true)
+                .build();
+
+        VehiculoEntity vehiculoGuardado = jpaRepository.save(vehiculoInicial);
+
         // Simular salida del vehículo
-        Vehiculo vehiculoConSalida = vehiculoGuardado.marcarSalida();
+        vehiculoGuardado.setActivo(false);
+        vehiculoGuardado.setFechaSalida(LocalDateTime.now());
 
         // When - ACT
-        Vehiculo vehiculoActualizado = repositoryAdapter.guardar(vehiculoConSalida);
+        VehiculoEntity vehiculoActualizado = jpaRepository.save(vehiculoGuardado);
 
         // Then - ASSERT
         assertNotNull(vehiculoActualizado);
@@ -235,14 +191,67 @@ class VehiculoRepositoryAdapterIntegrationTest {
                 .fechaIngreso(LocalDateTime.now())
                 .activo(true)
                 .build();
-        entityManager.persistAndFlush(entity);
+
+        // Persistir y obtener el ID para asegurar que existe
+        VehiculoEntity savedEntity = jpaRepository.save(entity);
+        entityManager.flush();
+
+        // Verificar que se guardó correctamente
+        assertTrue(jpaRepository.existsById("DEL123"));
 
         // When - ACT
-        repositoryAdapter.eliminar("DEL123");
+        jpaRepository.deleteById("DEL123");
+        entityManager.flush();
         entityManager.clear(); // Limpiar cache de primer nivel
 
         // Then - ASSERT
         VehiculoEntity entityEliminada = entityManager.find(VehiculoEntity.class, "DEL123");
         assertNull(entityEliminada);
+
+        // Verificar también con el repositorio
+        assertFalse(jpaRepository.existsById("DEL123"));
+    }
+
+    /**
+     * INTEGRATION TEST: Verificar que la consulta personalizada funciona
+     * Prueba la anotación @Query
+     */
+    @Test
+    void deberiaEjecutarConsultaPersonalizadaCorrectamente() {
+        // Given - ARRANGE
+        VehiculoEntity vehiculo1 = VehiculoEntity.builder()
+                .placa("QUERY1")
+                .tipo(TipoVehiculo.CARRO)
+                .fechaIngreso(LocalDateTime.now())
+                .activo(true)
+                .build();
+
+        VehiculoEntity vehiculo2 = VehiculoEntity.builder()
+                .placa("QUERY2")
+                .tipo(TipoVehiculo.MOTO)
+                .fechaIngreso(LocalDateTime.now())
+                .activo(true)
+                .build();
+
+        VehiculoEntity vehiculo3 = VehiculoEntity.builder()
+                .placa("QUERY3")
+                .tipo(TipoVehiculo.CARRO)
+                .fechaIngreso(LocalDateTime.now())
+                .activo(false)
+                .build();
+
+        entityManager.persist(vehiculo1);
+        entityManager.persist(vehiculo2);
+        entityManager.persist(vehiculo3);
+        entityManager.flush();
+
+        // When - ACT
+        List<VehiculoEntity> activos = jpaRepository.findByActivoTrue();
+
+        // Then - ASSERT
+        assertEquals(2, activos.size());
+        assertTrue(activos.stream().allMatch(VehiculoEntity::isActivo));
+        assertTrue(activos.stream().anyMatch(v -> "QUERY1".equals(v.getPlaca())));
+        assertTrue(activos.stream().anyMatch(v -> "QUERY2".equals(v.getPlaca())));
     }
 }

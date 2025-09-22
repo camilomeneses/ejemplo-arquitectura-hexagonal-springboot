@@ -46,7 +46,7 @@ tasks.named('test') {
 jar{
   manifest {
     attributes(
-      'Main-Class': 'demo.app.DemoGradleApplication'
+      'Main-Class': 'demo.app.demogradle.DemoGradleApplication'
     )
   }
 }

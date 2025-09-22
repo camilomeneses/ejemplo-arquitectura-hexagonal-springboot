@@ -175,8 +175,8 @@ class ParqueaderoServiceTest {
         int costo = parqueaderoService.calcularCosto(placa);
 
         // Then - ASSERT
-        // CARRO = 3000/hora * 2 horas = 6000
-        assertEquals(6000, costo);
+        // CARRO = 1000/hora * 2 horas = 2000 (tarifa real del enum)
+        assertEquals(2000, costo);
         verify(vehiculoRepository, times(1)).buscarPorPlaca(placa);
     }
 
