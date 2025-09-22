@@ -153,9 +153,9 @@ graph TB
     RA --> JPA
     JPA --> DB
     
-    classDef dddCore fill:#f3e5f5,stroke:#4a148c,stroke-width:3px
-    classDef dddEntity fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
-    classDef adapter fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef dddCore fill:#222,stroke:#4a148c,stroke-width:3px
+    classDef dddEntity fill:#333,stroke:#2e7d32,stroke-width:2px
+    classDef adapter fill:#222,stroke:#f57c00,stroke-width:2px
     
     class DS,E,VO,UC,REPO dddCore
     class AC,RA adapter
