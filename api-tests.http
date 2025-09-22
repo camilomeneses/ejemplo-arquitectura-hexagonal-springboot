@@ -1,0 +1,165 @@
+### API REST - Sistema de Parqueadero
+### Pruebas de endpoints para la aplicación de parqueadero
+
+### Variables de entorno
+@baseUrl = http://localhost:8080/api/parqueadero
+@contentType = application/json
+
+### 1. Ingresar Vehículo - Carro
+POST {{baseUrl}}/ingresar
+Content-Type: {{contentType}}
+
+{
+  "placa": "ABC123",
+  "tipo": "CARRO"
+}
+
+### 2. Ingresar Vehículo - Moto
+POST {{baseUrl}}/ingresar
+Content-Type: {{contentType}}
+
+{
+  "placa": "XYZ789",
+  "tipo": "MOTO"
+}
+
+### 3. Intentar ingresar vehículo duplicado (debe fallar)
+POST {{baseUrl}}/ingresar
+Content-Type: {{contentType}}
+
+{
+  "placa": "ABC123",
+  "tipo": "CARRO"
+}
+
+### 4. Consultar vehículos activos
+GET {{baseUrl}}/activos
+Content-Type: {{contentType}}
+
+### 5. Calcular costo de vehículo activo (debe fallar - vehículo aún en parqueadero)
+GET {{baseUrl}}/costo/ABC123
+Content-Type: {{contentType}}
+
+### 6. Sacar vehículo del parqueadero
+PUT {{baseUrl}}/sacar/ABC123
+Content-Type: {{contentType}}
+
+### 7. Calcular costo después de salida
+GET {{baseUrl}}/costo/ABC123
+Content-Type: {{contentType}}
+
+### 8. Consultar historial completo
+GET {{baseUrl}}/historial
+Content-Type: {{contentType}}
+
+### 9. Intentar sacar vehículo que no existe (debe fallar)
+PUT {{baseUrl}}/sacar/NOEXISTE
+Content-Type: {{contentType}}
+
+### 10. Intentar sacar vehículo ya salido (debe fallar)
+PUT {{baseUrl}}/sacar/ABC123
+Content-Type: {{contentType}}
+
+### 11. Prueba con placa inválida - muy corta
+POST {{baseUrl}}/ingresar
+Content-Type: {{contentType}}
+
+{
+  "placa": "AB12",
+  "tipo": "CARRO"
+}
+
+### 12. Prueba con placa inválida - muy larga
+POST {{baseUrl}}/ingresar
+Content-Type: {{contentType}}
+
+{
+  "placa": "ABCD1234",
+  "tipo": "CARRO"
+}
+
+### 13. Prueba sin tipo de vehículo
+POST {{baseUrl}}/ingresar
+Content-Type: {{contentType}}
+
+{
+  "placa": "DEF456"
+}
+
+### 14. Prueba con tipo inválido
+POST {{baseUrl}}/ingresar
+Content-Type: {{contentType}}
+
+{
+  "placa": "GHI789",
+  "tipo": "CAMION"
+}
+
+### 15. Múltiples vehículos para pruebas de carga
+POST {{baseUrl}}/ingresar
+Content-Type: {{contentType}}
+
+{
+  "placa": "AAA111",
+  "tipo": "MOTO"
+}
+
+###
+POST {{baseUrl}}/ingresar
+Content-Type: {{contentType}}
+
+{
+  "placa": "BBB222",
+  "tipo": "CARRO"
+}
+
+###
+POST {{baseUrl}}/ingresar
+Content-Type: {{contentType}}
+
+{
+  "placa": "CCC333",
+  "tipo": "MOTO"
+}
+
+### 16. Verificar estado después de múltiples ingresos
+GET {{baseUrl}}/activos
+Content-Type: {{contentType}}
+
+### 17. Sacar algunos vehículos
+PUT {{baseUrl}}/sacar/BBB222
+Content-Type: {{contentType}}
+
+###
+PUT {{baseUrl}}/sacar/XYZ789
+Content-Type: {{contentType}}
+
+### 18. Verificar historial final
+GET {{baseUrl}}/historial
+Content-Type: {{contentType}}
+
+### 19. Verificar vehículos activos restantes
+GET {{baseUrl}}/activos
+Content-Type: {{contentType}}
+
+### 20. Calcular costos de vehículos que salieron
+GET {{baseUrl}}/costo/BBB222
+Content-Type: {{contentType}}
+
+###
+GET {{baseUrl}}/costo/XYZ789
+Content-Type: {{contentType}}
+
+###
+# Notas de uso:
+# 1. Asegúrate de que la aplicación esté ejecutándose en puerto 8080
+# 2. Los endpoints devuelven diferentes códigos HTTP según el resultado:
+#    - 201: Vehículo ingresado exitosamente
+#    - 200: Operación exitosa
+#    - 404: Vehículo no encontrado
+#    - 409: Conflicto (vehículo ya existe)
+#    - 400: Solicitud inválida
+# 3. Las placas se convierten automáticamente a mayúsculas
+# 4. Los tipos válidos son: CARRO, MOTO
+# 5. Las tarifas son: CARRO = 3000/hora, MOTO = 2000/hora
+# 6. El tiempo mínimo de cobro es 1 hora

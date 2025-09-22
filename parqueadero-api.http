@@ -1,0 +1,215 @@
+### Archivo para probar el Sistema de Parqueadero
+### Asegúrate de que la aplicación esté ejecutándose en http://localhost:8080
+
+### 1. Verificar que la aplicación esté funcionando
+GET http://localhost:8080/api/parqueadero/activos
+Accept: application/json
+
+###
+
+### 2. Ingresar un carro al parqueadero
+POST http://localhost:8080/api/parqueadero/ingresar
+Content-Type: application/json
+
+{
+  "placa": "ABC123",
+  "tipo": "CARRO"
+}
+
+###
+
+### 3. Ingresar una moto al parqueadero
+POST http://localhost:8080/api/parqueadero/ingresar
+Content-Type: application/json
+
+{
+  "placa": "XYZ789",
+  "tipo": "MOTO"
+}
+
+###
+
+### 4. Ingresar otro carro
+POST http://localhost:8080/api/parqueadero/ingresar
+Content-Type: application/json
+
+{
+  "placa": "DEF456",
+  "tipo": "CARRO"
+}
+
+###
+
+### 5. Intentar ingresar un vehículo que ya está en el parqueadero (debería fallar)
+POST http://localhost:8080/api/parqueadero/ingresar
+Content-Type: application/json
+
+{
+  "placa": "ABC123",
+  "tipo": "CARRO"
+}
+
+###
+
+### 6. Consultar todos los vehículos activos en el parqueadero
+GET http://localhost:8080/api/parqueadero/activos
+Accept: application/json
+
+###
+
+### 7. Sacar un carro del parqueadero (esto calculará el costo automáticamente)
+PUT http://localhost:8080/api/parqueadero/sacar/ABC123
+Accept: application/json
+
+###
+
+### 8. Sacar la moto del parqueadero
+PUT http://localhost:8080/api/parqueadero/sacar/XYZ789
+Accept: application/json
+
+###
+
+### 9. Intentar sacar un vehículo que no existe (debería fallar)
+PUT http://localhost:8080/api/parqueadero/sacar/NOEXISTE
+Accept: application/json
+
+###
+
+### 10. Consultar el costo de un vehículo que ya salió
+GET http://localhost:8080/api/parqueadero/costo/ABC123
+Accept: application/json
+
+###
+
+### 11. Intentar consultar costo de vehículo que aún está en el parqueadero (debería fallar)
+GET http://localhost:8080/api/parqueadero/costo/DEF456
+Accept: application/json
+
+###
+
+### 12. Consultar historial completo de vehículos
+GET http://localhost:8080/api/parqueadero/historial
+Accept: application/json
+
+###
+
+### 13. Probar validaciones - placa vacía (debería fallar)
+POST http://localhost:8080/api/parqueadero/ingresar
+Content-Type: application/json
+
+{
+  "placa": "",
+  "tipo": "CARRO"
+}
+
+###
+
+### 14. Probar validaciones - placa muy corta (debería fallar)
+POST http://localhost:8080/api/parqueadero/ingresar
+Content-Type: application/json
+
+{
+  "placa": "AB12",
+  "tipo": "CARRO"
+}
+
+###
+
+### 15. Probar validaciones - tipo nulo (debería fallar)
+POST http://localhost:8080/api/parqueadero/ingresar
+Content-Type: application/json
+
+{
+  "placa": "GHI789"
+}
+
+###
+
+### 16. Verificar vehículos activos después de las operaciones
+GET http://localhost:8080/api/parqueadero/activos
+Accept: application/json
+
+###
+
+### =====================================================
+### CASOS DE PRUEBA ADICIONALES
+### =====================================================
+
+### 17. Ingresar varios vehículos para simular un parqueadero lleno
+POST http://localhost:8080/api/parqueadero/ingresar
+Content-Type: application/json
+
+{
+  "placa": "JKL012",
+  "tipo": "MOTO"
+}
+
+###
+
+POST http://localhost:8080/api/parqueadero/ingresar
+Content-Type: application/json
+
+{
+  "placa": "MNO345",
+  "tipo": "CARRO"
+}
+
+###
+
+POST http://localhost:8080/api/parqueadero/ingresar
+Content-Type: application/json
+
+{
+  "placa": "PQR678",
+  "tipo": "MOTO"
+}
+
+###
+
+### 18. Consultar estado actual del parqueadero
+GET http://localhost:8080/api/parqueadero/activos
+Accept: application/json
+
+###
+
+### 19. Sacar todos los vehículos restantes
+PUT http://localhost:8080/api/parqueadero/sacar/DEF456
+Accept: application/json
+
+###
+
+PUT http://localhost:8080/api/parqueadero/sacar/JKL012
+Accept: application/json
+
+###
+
+PUT http://localhost:8080/api/parqueadero/sacar/MNO345
+Accept: application/json
+
+###
+
+PUT http://localhost:8080/api/parqueadero/sacar/PQR678
+Accept: application/json
+
+###
+
+### 20. Verificar que el parqueadero esté vacío
+GET http://localhost:8080/api/parqueadero/activos
+Accept: application/json
+
+###
+
+### 21. Consultar historial final completo
+GET http://localhost:8080/api/parqueadero/historial
+Accept: application/json
+
+###
+
+### =====================================================
+### ACCESO A LA CONSOLA H2
+### Puedes acceder a la base de datos H2 en:
+### URL: http://localhost:8080/h2-console
+### JDBC URL: jdbc:h2:mem:parqueadero
+### Username: sa
+### Password: password
+### =====================================================

@@ -1,0 +1,191 @@
+### Archivo de Pruebas HTTP para Demo Gradle - Arquitectura Hexagonal
+### Este archivo te permite probar los endpoints de tu aplicación directamente desde tu IDE
+
+# Variables de entorno
+@baseUrl = http://localhost:8080
+@contentType = application/json
+
+### 1. Health Check - Verificar que la aplicación esté funcionando
+GET {{baseUrl}}/actuator/health
+Accept: application/json
+
+### 2. Información de la aplicación
+GET {{baseUrl}}/actuator/info
+Accept: application/json
+
+### 3. Métricas de la aplicación (si Actuator está habilitado)
+GET {{baseUrl}}/actuator/metrics
+Accept: application/json
+
+### 4. Ejemplo de endpoint GET - Obtener todos los usuarios
+GET {{baseUrl}}/api/users
+Accept: {{contentType}}
+
+### 5. Ejemplo de endpoint GET por ID - Obtener usuario específico
+GET {{baseUrl}}/api/users/1
+Accept: {{contentType}}
+
+### 6. Ejemplo de endpoint POST - Crear un nuevo usuario
+POST {{baseUrl}}/api/users
+Content-Type: {{contentType}}
+
+{
+  "name": "Juan Pérez",
+  "email": "juan.perez@email.com"
+}
+
+### 7. Ejemplo de endpoint PUT - Actualizar usuario existente
+PUT {{baseUrl}}/api/users/1
+Content-Type: {{contentType}}
+
+{
+  "id": "1",
+  "name": "Juan Carlos Pérez",
+  "email": "juan.carlos@email.com"
+}
+
+### 8. Ejemplo de endpoint DELETE - Eliminar usuario
+DELETE {{baseUrl}}/api/users/1
+
+### 9. Ejemplo con parámetros de consulta - Buscar usuarios por nombre
+GET {{baseUrl}}/api/users/search?name=Juan
+Accept: {{contentType}}
+
+### 10. Ejemplo de endpoint con paginación
+GET {{baseUrl}}/api/users?page=0&size=10&sort=name,asc
+Accept: {{contentType}}
+
+### 11. Ejemplo de manejo de errores - Usuario no encontrado
+GET {{baseUrl}}/api/users/999
+Accept: {{contentType}}
+
+### 12. Ejemplo de validación - Crear usuario con datos inválidos
+POST {{baseUrl}}/api/users
+Content-Type: {{contentType}}
+
+{
+  "name": "",
+  "email": "email-invalido"
+}
+
+### 13. Ejemplo de endpoint con autenticación (JWT)
+# Primero obtener el token (si tienes Spring Security configurado)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "username": "admin",
+  "password": "password123"
+}
+
+### 14. Usar el token obtenido en requests protegidos
+# @authToken = {token obtenido del login}
+GET {{baseUrl}}/api/protected/users
+Authorization: Bearer {{authToken}}
+Accept: {{contentType}}
+
+### 15. Ejemplo de endpoint para subir archivos
+POST {{baseUrl}}/api/users/1/avatar
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="avatar.jpg"
+Content-Type: image/jpeg
+
+< ./test-files/avatar.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 16. Ejemplo de endpoint que consume API externa (con Feign)
+GET {{baseUrl}}/api/external/users/1
+Accept: {{contentType}}
+
+### 17. Ejemplo de endpoint con caché
+GET {{baseUrl}}/api/users/1
+Cache-Control: no-cache
+Accept: {{contentType}}
+
+### 18. Ejemplo de endpoint asíncrono
+POST {{baseUrl}}/api/users/batch
+Content-Type: {{contentType}}
+
+{
+  "users": [
+    {
+      "name": "Usuario 1",
+      "email": "usuario1@email.com"
+    },
+    {
+      "name": "Usuario 2",
+      "email": "usuario2@email.com"
+    }
+  ]
+}
+
+### 19. Ejemplo de endpoint con headers personalizados
+GET {{baseUrl}}/api/users
+Accept: {{contentType}}
+X-Request-ID: 12345
+X-Client-Version: 1.0.0
+
+### 20. Ejemplo de endpoint de streaming (Server-Sent Events)
+GET {{baseUrl}}/api/users/stream
+Accept: text/event-stream
+
+### 21. Ejemplo para probar resilience patterns (Circuit Breaker)
+GET {{baseUrl}}/api/external/slow-service
+Accept: {{contentType}}
+
+### 22. Ejemplo de endpoint con diferentes formatos de respuesta
+GET {{baseUrl}}/api/users/1
+Accept: application/xml
+
+### 23. Ejemplo de endpoint para testing de performance
+GET {{baseUrl}}/api/users/performance-test
+Accept: {{contentType}}
+
+### 24. Ejemplo de endpoint con filtros complejos
+GET {{baseUrl}}/api/users/filter?name=Juan&email=@gmail.com&createdAfter=2024-01-01&status=ACTIVE
+Accept: {{contentType}}
+
+### 25. Ejemplo de endpoint para exportar datos
+GET {{baseUrl}}/api/users/export?format=csv
+Accept: text/csv
+
+###############################################################################
+### SECCIÓN DE MICROSERVICIOS
+###############################################################################
+
+### 26. Service Discovery - Obtener servicios registrados
+GET {{baseUrl}}/actuator/services
+Accept: {{contentType}}
+
+### 27. Circuit Breaker - Estado del circuit breaker
+GET {{baseUrl}}/actuator/circuitbreakers
+Accept: {{contentType}}
+
+### 28. Distributed Tracing - Información de trazas
+GET {{baseUrl}}/actuator/traces
+Accept: {{contentType}}
+
+### 29. Configuration - Propiedades de configuración
+GET {{baseUrl}}/actuator/configprops
+Accept: {{contentType}}
+
+### 30. Environment - Variables de entorno
+GET {{baseUrl}}/actuator/env
+Accept: {{contentType}}
+
+###############################################################################
+### NOTAS IMPORTANTES:
+###
+### 1. Asegúrate de que tu aplicación esté ejecutándose en el puerto 8080
+### 2. Algunos endpoints requieren configuración adicional (Security, Actuator, etc.)
+### 3. Los endpoints de ejemplo asumen que has implementado la funcionalidad correspondiente
+### 4. Puedes modificar las URLs y datos según tu implementación específica
+### 5. Para usar con IntelliJ IDEA, instala el plugin "HTTP Client"
+### 6. Para VS Code, usa la extensión "REST Client"
+###
+### Comandos útiles:
+### - Para ejecutar todos los tests: Ctrl+Shift+R (IntelliJ) o Ctrl+Shift+P > REST Client (VS Code)
+### - Para ejecutar un test específico: Click en "Send Request" o Ctrl+Enter
+###############################################################################
